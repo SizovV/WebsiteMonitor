@@ -1,3 +1,4 @@
+import os
 import telebot
 import Config
 import requests
@@ -6,7 +7,6 @@ import difflib
 import sqlite3
 import time
 import schedule
-from telebot import apihelper
 from datetime import datetime
 from threading import Thread
 
@@ -45,7 +45,6 @@ class WebsiteMonitor:
         if self.is_reachable(url):
             content = self.fetch_content(url)
             hash_id = hashlib.md5(url.encode()).hexdigest()[:8]
-            print(hash_id, "hello")
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             cursor.execute('''INSERT OR IGNORE INTO websites (url, hash_id, initial_content, check_interval, user_id, last_checked)
@@ -143,9 +142,9 @@ class WebsiteMonitor:
 
 
 # apihelper.proxy = {'http': 'http://catalog.live.ovh:8080'}
-bot = telebot.TeleBot(Config.TOKEN)
-i = 0
-id2 = 275457031
+API_KEY = os.getenv("API_KEY")  # Fetch API_KEY from environment variable
+bot = telebot.TeleBot(API_KEY)
+# id_admin = 275457031
 
 monitor = WebsiteMonitor()
 

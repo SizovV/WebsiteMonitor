@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  web-monitor-bot:
+    build: .
+    container_name: web_monitor_bot
+    env_file:
+      - .env
+    environment:
+      - API_KEY=${API_KEY}
+    volumes:
+      - .:/app
+    command: python bot.py

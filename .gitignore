@@ -1,0 +1,5 @@
+Config.py
+.idea/
+__pycache__/
+*.db
+

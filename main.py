@@ -176,7 +176,7 @@ def add_website(message):
         hash_id = monitor.add_website(url, interval, user_id)
 
         if hash_id:
-            bot.reply_to(message, f"Website {url} added with a check interval of {interval/(60*60)} hours.\n"
+            bot.reply_to(message, f"Website {url} added with a check interval of {interval} hours.\n"
                                   f"Use this ID to manage it: {hash_id}")
         else:
             bot.reply_to(message, f"Could not reach {url}. Please check the URL and try again.")

@@ -161,7 +161,7 @@ def start_monitoring():
 @bot.message_handler(commands=['start'])
 def welcome(message):
     bot.send_message(message.chat.id,
-                     "Welcome to the Website Monitor Bot! Use /add <url> <interval_in_seconds> to start monitoring a website.")
+                     "Welcome to the Website Monitor Bot! Use /add <url> <interval_in_hours> to start monitoring a website.")
     # bot.send_message(message.chat.id, "Кстати, если найдешь баг или фичу срузу пиши @ghusty_dab")
 
 
@@ -176,12 +176,12 @@ def add_website(message):
         hash_id = monitor.add_website(url, interval, user_id)
 
         if hash_id:
-            bot.reply_to(message, f"Website {url} added with a check interval of {interval} hours.\n"
+            bot.reply_to(message, f"Website {url} added with a check interval of {interval/(60*60)} hours.\n"
                                   f"Use this ID to manage it: {hash_id}")
         else:
             bot.reply_to(message, f"Could not reach {url}. Please check the URL and try again.")
     except (IndexError, ValueError):
-        bot.reply_to(message, "Usage: /add <url> <interval_in_seconds>")
+        bot.reply_to(message, "Usage: /add <url> <interval_in_hours>")
 
 
 @bot.message_handler(commands=['stop'])
@@ -206,7 +206,7 @@ def list_websites(message):
     if websites:
         response = "Your monitored websites:\n"
         for url, interval, hash_id in websites:
-            response += f"- {url} (check every {interval} hours), ID: {hash_id}\n"
+            response += f"- {url} (check every {interval/(60*60)} hours), ID: {hash_id}\n"
     else:
         response = "You are not currently monitoring any websites."
 

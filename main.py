@@ -39,7 +39,7 @@ class WebsiteMonitor:
         conn.commit()
         conn.close()
 
-    def add_website(self, url, check_interval, user_id):
+    def add_website(self, url, interval, user_id):
         import hashlib
         """Adds a new website with its initial content and check interval to the database."""
         if self.is_reachable(url):
@@ -47,6 +47,7 @@ class WebsiteMonitor:
             hash_id = hashlib.md5(url.encode()).hexdigest()[:8]
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
+            check_interval = interval*60*60 # Convert hours into seconds
             cursor.execute('''INSERT OR IGNORE INTO websites (url, hash_id, initial_content, check_interval, user_id, last_checked)
                               VALUES (?, ?, ?, ?, ?, ?)''',
                            (url, hash_id, content, check_interval, user_id, datetime.now()))
@@ -142,7 +143,8 @@ class WebsiteMonitor:
 
 
 # apihelper.proxy = {'http': 'http://catalog.live.ovh:8080'}
-API_KEY = os.getenv("API_KEY")  # Fetch API_KEY from environment variable
+#API_KEY = os.getenv("API_KEY")  # Fetch API_KEY from environment variable
+API_KEY = Config.TOKEN
 bot = telebot.TeleBot(API_KEY)
 # id_admin = 275457031
 
@@ -174,7 +176,7 @@ def add_website(message):
         hash_id = monitor.add_website(url, interval, user_id)
 
         if hash_id:
-            bot.reply_to(message, f"Website {url} added with a check interval of {interval} seconds.\n"
+            bot.reply_to(message, f"Website {url} added with a check interval of {interval} hours.\n"
                                   f"Use this ID to manage it: {hash_id}")
         else:
             bot.reply_to(message, f"Could not reach {url}. Please check the URL and try again.")
@@ -204,7 +206,7 @@ def list_websites(message):
     if websites:
         response = "Your monitored websites:\n"
         for url, interval, hash_id in websites:
-            response += f"- {url} (check every {interval} seconds), ID: {hash_id}\n"
+            response += f"- {url} (check every {interval} hours), ID: {hash_id}\n"
     else:
         response = "You are not currently monitoring any websites."
 

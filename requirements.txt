@@ -1,0 +1,6 @@
+telebot~=0.0.5
+requests~=2.32.3
+datetime~=5.5
+schedule~=1.2.2
+django-scheduler~=0.10.1
+beautifulsoup4~=4.12.3

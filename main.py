@@ -235,11 +235,11 @@ def send_statistics(message):
             cursor = conn.cursor()
 
             # Get total subjects
-            cursor.execute("SELECT COUNT(user_id) FROM websites")
+            cursor.execute("SELECT COUNT(DISTINCT user_id) FROM websites")
             total_subjects = cursor.fetchone()[0]
 
             # Get number of tracking sites
-            cursor.execute("SELECT COUNT(id) FROM websites")
+            cursor.execute("SELECT COUNT(DISTINCT id) FROM websites")
             tracking_sites = cursor.fetchone()[0]
 
             # Close the database connection

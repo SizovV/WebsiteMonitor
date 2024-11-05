@@ -27,20 +27,6 @@ url = "https://huutokaupat.com/ilmoittaja/kone-keltto-oy"
 #print(fetch_content(url))
 
 
-
-from requests_html import HTMLSession
-
-
-session = HTMLSession()
-response = session.get(url, headers=headers)
-response.html.render(sleep=0.6)  # Renders the JavaScript
-content = response.html.text  # Get the fully rendered HTML content
-
-soup = BeautifulSoup(content, 'html.parser')
-
-print(soup)
-
-
 # Check for changes
 #additions, deletions = check_content_changes(old_content, new_content)
 

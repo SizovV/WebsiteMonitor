@@ -1,37 +1,45 @@
 import difflib
+from bs4 import BeautifulSoup
+import requests
+import hashlib
+import time
+
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
+}
+def fetch_content(url):
+    """Fetches and parses the HTML content of a URL."""
+    response = requests.get(url, headers=headers)
+    time.sleep(3)
+    response.raise_for_status()
+    soup = BeautifulSoup(response.text, 'html.parser')
+    print(requests.head(url, timeout=5))
+    print(response.text)
+    return soup.get_text().strip()
+
+url = "https://huutokaupat.com/ilmoittaja/cityvarasto-oy"
+url = "https://huutokaupat.com/ilmoittaja/rinta-joupin-autoliike-oy"
+url = "https://huutokaupat.com/ilmoittaja/bilar99e-oy"
+url = "https://huutokaupat.com/ilmoittaja/rawest"
+url = "https://huutokaupat.com/ilmoittaja/kone-keltto-oy"
+#url = "https://huutokaupat.com/ilmoittaja/helsingin-kaupunki-kaupunkiympariston-toimiala-tontit-yksikko "
+#print(hashlib.md5(url.encode()).hexdigest()[:8] )
+#print(fetch_content(url))
 
 
-def check_content_changes(old_content, new_content):
-    """Checks for additions and deletions in the content."""
-    # Split content into lines for comparison
-    old_lines = old_content.splitlines()
-    new_lines = new_content.splitlines()
 
-    # Run unified_diff to get the differences
-    diff = list(difflib.unified_diff(old_lines, new_lines, lineterm=""))
-
-    additions = []
-    deletions = []
-
-    # Parse the diff output
-    for line in diff:
-        print(line)
-        if line.startswith('+') and not line.startswith('+++'):  # Exclude file header line with '+++'
-            additions.append(line[1:])  # Exclude '+' symbol
-        elif line.startswith('-') and not line.startswith('---'):  # Exclude file header line with '---'
-            deletions.append(line[1:])  # Exclude '-' symbol
-
-    return additions, deletions
+from requests_html import HTMLSession
 
 
-# Example usage:
-old_content = """Hello, world!
-This is the old content.
-Line to be removed."""
+session = HTMLSession()
+response = session.get(url, headers=headers)
+response.html.render(sleep=0.6)  # Renders the JavaScript
+content = response.html.text  # Get the fully rendered HTML content
 
-new_content = """Hello, world!
-This is the new content.
-Additional line here."""
+soup = BeautifulSoup(content, 'html.parser')
+
+print(soup)
+
 
 # Check for changes
 #additions, deletions = check_content_changes(old_content, new_content)
@@ -39,7 +47,4 @@ Additional line here."""
 #print("Additions:", additions)
 #print("Deletions:", deletions)
 
-import hashlib
-url = "https://careers.bcplatforms.com/jobs"
-print(hashlib.md5(url.encode()).hexdigest()[:8] )
 

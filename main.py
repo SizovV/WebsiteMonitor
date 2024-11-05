@@ -9,8 +9,11 @@ import time
 import schedule
 from datetime import datetime
 from threading import Thread
+from requests_html import HTMLSession
 
-
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
+}
 class WebsiteMonitor:
     def __init__(self, db_path='website_monitor.db'):
         self.db_path = db_path
@@ -68,10 +71,19 @@ class WebsiteMonitor:
 
     def fetch_content(self, url):
         """Fetches and parses the HTML content of a URL."""
+        # 1 approach, wait for download a little bit
+        session = HTMLSession()
+        response = session.get(url, headers=headers)
+        response.html.render(sleep=0.6)  # Renders the JavaScript
+        soup_1 = BeautifulSoup(response.html.text, 'html.parser')
+
+        # 2 approach, instant download of web-page
         response = requests.get(url)
         response.raise_for_status()
-        soup = BeautifulSoup(response.text, 'html.parser')
-        return soup.get_text().strip()
+        soup_2 = BeautifulSoup(response.text, 'html.parser')
+
+        soup = soup_1.get_text().strip() + soup_2.get_text().strip()
+        return soup
 
     def compare_content(self, new_content, initial_content):
         """Compares new content with the initial content and logs the differences."""
@@ -146,7 +158,7 @@ class WebsiteMonitor:
 #API_KEY = os.getenv("API_KEY")  # Fetch API_KEY from environment variable
 API_KEY = Config.TOKEN
 bot = telebot.TeleBot(API_KEY)
-# id_admin = 275457031
+ADMIN_ID = 275457031
 
 monitor = WebsiteMonitor()
 
@@ -211,6 +223,47 @@ def list_websites(message):
         response = "You are not currently monitoring any websites."
 
     bot.reply_to(message, response)
+
+
+@bot.message_handler(commands=['stat'])
+def send_statistics(message):
+    try:
+        if message.from_user.id == ADMIN_ID:
+            # Connect to the database
+            DATABASE_PATH = "website_monitor.db"
+            conn = sqlite3.connect(DATABASE_PATH)
+            cursor = conn.cursor()
+
+            # Get total subjects
+            cursor.execute("SELECT COUNT(id) FROM Subject")
+            total_subjects = cursor.fetchone()[0]
+
+            # Get new daily subjects
+            start_of_day = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+            cursor.execute(
+                "SELECT COUNT(id) FROM Subject WHERE created_at >= ?",
+                (start_of_day,)
+            )
+            new_daily_subjects = cursor.fetchone()[0]
+
+            # Get number of tracking sites
+            cursor.execute("SELECT COUNT(id) FROM Website")
+            tracking_sites = cursor.fetchone()[0]
+
+            # Close the database connection
+            conn.close()
+
+            # Format the statistics message
+            stats_message = (
+                f"📊 **Statistics**\n"
+                f"Total Subjects: {total_subjects}\n"
+                f"New Daily Subjects: {new_daily_subjects}\n"
+                f"Tracking Sites: {tracking_sites}"
+            )
+            bot.send_message(ADMIN_ID, stats_message)
+    except Exception as e:
+        bot.send_message(ADMIN_ID, f"An error occurred while fetching statistics: {e}")
+
 
 # Start the bot and website monitoring
 start_monitoring()

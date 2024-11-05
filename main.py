@@ -238,14 +238,6 @@ def send_statistics(message):
             cursor.execute("SELECT COUNT(user_id) FROM websites")
             total_subjects = cursor.fetchone()[0]
 
-            # Get new daily subjects
-            start_of_day = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-            cursor.execute(
-                "SELECT COUNT(user_id) FROM websites WHERE created_at >= ?",
-                (start_of_day,)
-            )
-            new_daily_subjects = cursor.fetchone()[0]
-
             # Get number of tracking sites
             cursor.execute("SELECT COUNT(id) FROM websites")
             tracking_sites = cursor.fetchone()[0]
@@ -257,7 +249,6 @@ def send_statistics(message):
             stats_message = (
                 f"📊 **Statistics**\n"
                 f"Total Subjects: {total_subjects}\n"
-                f"New Daily Subjects: {new_daily_subjects}\n"
                 f"Tracking Sites: {tracking_sites}"
             )
             bot.send_message(ADMIN_ID, stats_message)

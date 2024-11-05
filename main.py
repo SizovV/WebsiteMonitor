@@ -235,19 +235,19 @@ def send_statistics(message):
             cursor = conn.cursor()
 
             # Get total subjects
-            cursor.execute("SELECT COUNT(id) FROM Subject")
+            cursor.execute("SELECT COUNT(user_id) FROM websites")
             total_subjects = cursor.fetchone()[0]
 
             # Get new daily subjects
             start_of_day = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
             cursor.execute(
-                "SELECT COUNT(id) FROM Subject WHERE created_at >= ?",
+                "SELECT COUNT(user_id) FROM websites WHERE created_at >= ?",
                 (start_of_day,)
             )
             new_daily_subjects = cursor.fetchone()[0]
 
             # Get number of tracking sites
-            cursor.execute("SELECT COUNT(id) FROM Website")
+            cursor.execute("SELECT COUNT(id) FROM websites")
             tracking_sites = cursor.fetchone()[0]
 
             # Close the database connection

@@ -4,3 +4,5 @@ datetime~=5.5
 schedule~=1.2.2
 django-scheduler~=0.10.1
 beautifulsoup4~=4.12.3
+bs4~=0.0.2
+pyppeteer~=2.0.0

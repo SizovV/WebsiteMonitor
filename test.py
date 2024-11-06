@@ -3,28 +3,39 @@ from bs4 import BeautifulSoup
 import requests
 import hashlib
 import time
+from pyppeteer import launch
+import asyncio
 
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
 }
-def fetch_content(url):
+async def fetch_content(url):
     """Fetches and parses the HTML content of a URL."""
-    response = requests.get(url, headers=headers)
-    time.sleep(3)
-    response.raise_for_status()
-    soup = BeautifulSoup(response.text, 'html.parser')
+    browser = await launch(headless=True, args=['--no-sandbox'])
+    page = await browser.newPage()
+    await page.goto(url)
+    await asyncio.sleep(0.6)  # Give time for JavaScript to load
+    html_content = await page.content()
+    await browser.close()
+    # Parse with BeautifulSoup
+    soup = BeautifulSoup(html_content, 'html.parser')
+
     print(requests.head(url, timeout=5))
-    print(response.text)
     return soup.get_text().strip()
 
-url = "https://huutokaupat.com/ilmoittaja/cityvarasto-oy"
-url = "https://huutokaupat.com/ilmoittaja/rinta-joupin-autoliike-oy"
-url = "https://huutokaupat.com/ilmoittaja/bilar99e-oy"
-url = "https://huutokaupat.com/ilmoittaja/rawest"
-url = "https://huutokaupat.com/ilmoittaja/kone-keltto-oy"
+
 #url = "https://huutokaupat.com/ilmoittaja/helsingin-kaupunki-kaupunkiympariston-toimiala-tontit-yksikko "
 #print(hashlib.md5(url.encode()).hexdigest()[:8] )
-#print(fetch_content(url))
+async def main():
+    url = "https://huutokaupat.com/ilmoittaja/cityvarasto-oy"
+    url = "https://huutokaupat.com/ilmoittaja/rinta-joupin-autoliike-oy"
+    url = "https://huutokaupat.com/ilmoittaja/bilar99e-oy"
+    url = "https://huutokaupat.com/ilmoittaja/rawest"
+    url = "https://huutokaupat.com/ilmoittaja/kone-keltto-oy"
+    soup_1 = await fetch_content(url)
+    print(soup_1)
+
+asyncio.run(main())
 
 
 # Check for changes

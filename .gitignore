@@ -3,3 +3,5 @@ Config.py
 __pycache__/
 *.db
 .env
+.out
+.venv/

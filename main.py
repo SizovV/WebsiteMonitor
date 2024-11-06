@@ -32,12 +32,6 @@ class WebsiteMonitor:
                                 user_id INTEGER,
                                 last_checked TIMESTAMP
                             )''')
-
-            cursor.execute("SELECT * FROM websites")
-            resa = cursor.fetchall()
-            for j in resa:
-                print(j)
-
             conn.commit()
 
     async def add_website(self, url, interval, user_id):

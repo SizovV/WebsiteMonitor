@@ -33,7 +33,6 @@ class WebsiteMonitor:
                                 last_checked TIMESTAMP
                             )''')
 
-            print("dataset created")
             cursor.execute("SELECT * FROM websites")
             resa = cursor.fetchall()
             for j in resa:
@@ -44,9 +43,7 @@ class WebsiteMonitor:
     async def add_website(self, url, interval, user_id):
         import hashlib
         """Adds a new website with its initial content and check interval to the database."""
-        print(url)
         if self.is_reachable(url):
-            print(url)
             content = await self.fetch_content(url)
             hash_id = hashlib.md5(url.encode()).hexdigest()[:8]
 

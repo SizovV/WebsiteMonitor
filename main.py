@@ -77,7 +77,7 @@ class WebsiteMonitor:
 
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
-                check_interval = interval * 60  # Convert hours into seconds
+                check_interval = interval * 60 * 60 # Convert hours into seconds
                 cursor.execute('''INSERT OR IGNORE INTO websites (url, hash_id, initial_content, check_interval, user_id, last_checked)
                               VALUES (?, ?, ?, ?, ?, ?)''',
                                (url, hash_id, content, check_interval, user_id, datetime.now()))

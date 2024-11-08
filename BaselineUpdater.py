@@ -12,18 +12,12 @@ def get_page_content(url):
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
     }
 
-    # 1 approach, wait for download a little bit
-    session = HTMLSession()
-    response = session.get(url, headers=headers)
-    response.html.render(sleep=0.6)  # Renders the JavaScript
-    soup_1 = BeautifulSoup(response.html.text, 'html.parser')
-
     # 2 approach, instant download of web-page
     response = requests.get(url)
     response.raise_for_status()
     soup_2 = BeautifulSoup(response.text, 'html.parser')
 
-    soup = soup_1.get_text().strip() + soup_2.get_text().strip()
+    soup = soup_2.get_text().strip()
     return soup
 
 def update_baseline_content():

@@ -1,5 +1,5 @@
 from telebot import TeleBot
-
+import unicodedata
 import Config
 import requests
 from bs4 import BeautifulSoup
@@ -10,9 +10,9 @@ import schedule
 from datetime import datetime
 from threading import Thread
 import asyncio
-from telebot.async_telebot import AsyncTeleBot
 import subprocess
 import hashlib
+import re
 
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
@@ -22,6 +22,27 @@ headers = {
 def compare_content(new_content, initial_content):
     """Compares new content with the initial content and logs the differences."""
     return list(difflib.unified_diff(initial_content.splitlines(), new_content.splitlines(), lineterm=""))
+
+
+def remove_control_characters(s):
+    return ''.join(c for c in s if unicodedata.category(c)[0] != 'C')
+
+
+def preprocess_content(html_content):
+    soup = BeautifulSoup(html_content, 'html.parser')
+
+    # Remove header, nav, or other specific tags
+    if soup.header:
+        soup.header.decompose()
+    if soup.nav:
+        soup.nav.decompose()
+
+    # Remove cookie-related elements by class or ID
+    for div in soup.find_all(True, {'class': ['cookie-banner', 'cookie-consent']}):
+        div.decompose()
+
+    # Additional tags can be removed similarly
+    return soup.get_text().strip()
 
 
 class WebsiteMonitor:
@@ -49,7 +70,7 @@ class WebsiteMonitor:
             cursor.execute('''CREATE TABLE IF NOT EXISTS websites (
                                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                                 url TEXT UNIQUE,
-                                hash_id TEXT UNIQUE,
+                                hash_id TEXT,
                                 initial_content TEXT,
                                 check_interval INTEGER,
                                 user_id INTEGER,
@@ -71,16 +92,29 @@ class WebsiteMonitor:
         """Adds a new website with its initial content and check interval to the database."""
         if self.is_reachable(url):
             output = subprocess.run(['python3', 'fetch_page.py', url], capture_output=True, text=True)
-            content = BeautifulSoup(output.stdout, 'html.parser').get_text().strip()
-
+            content = preprocess_content(output.stdout)
+            # BeautifulSoup(output.stdout, 'html.parser').get_text().strip()
+            content = remove_control_characters(content)
             hash_id = hashlib.md5(url.encode()).hexdigest()[:8]
 
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
-                check_interval = interval * 60 * 60 # Convert hours into seconds
-                cursor.execute('''INSERT OR IGNORE INTO websites (url, hash_id, initial_content, check_interval, user_id, last_checked)
+                check_interval = interval * 60  # Convert hours into seconds
+
+                cursor.execute(
+                    "SELECT url, user_id FROM websites WHERE url = ? and user_id = ?",
+                    (url, user_id))
+                resa = cursor.fetchall()
+                if len(resa) > 0:
+                    cursor.execute(
+                        "UPDATE websites SET check_interval = ?, initial_content = ?, last_checked = ? WHERE url = ? "
+                        "and user_id = ?", (check_interval, datetime.now(), content, url, user_id))
+                    conn.commit()
+                else:
+                    cursor.execute('''INSERT INTO websites (url, hash_id, initial_content, check_interval, user_id, last_checked)
                               VALUES (?, ?, ?, ?, ?, ?)''',
-                               (url, hash_id, content, check_interval, user_id, datetime.now()))
+                                   (url, hash_id, content, check_interval, user_id, datetime.now()))
+                    conn.commit()
                 conn.commit()
 
             def wrapper():
@@ -115,7 +149,8 @@ class WebsiteMonitor:
             if row:
                 initial_content = row[0]
                 output = subprocess.run(['python3', 'fetch_page.py', url], capture_output=True, text=True)
-                new_content = BeautifulSoup(output.stdout, 'html.parser').get_text().strip()
+                new_content = preprocess_content(output.stdout)
+                new_content = remove_control_characters(new_content)
                 changes = compare_content(new_content, initial_content)
 
                 # Parse the diff output
@@ -128,6 +163,7 @@ class WebsiteMonitor:
                     cursor.execute(
                         "UPDATE websites SET initial_content = ?, last_checked = ? WHERE url = ? and user_id = ?",
                         (new_content, datetime.now(), url, user_id))
+                    conn.commit()
 
                     bot.send_message(user_id, f"Website {url} has changed. Do you want to continue monitoring? Reply "
                                               f"with /stop {url} to stop.")
@@ -282,6 +318,7 @@ monitor = WebsiteMonitor()
 def main():
     # Start the bot
     bot.polling(none_stop=True, interval=1, timeout=30)
+
 
 # Run the bot
 asyncio.run(main())
